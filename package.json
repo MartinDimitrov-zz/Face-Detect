@@ -1,6 +1,6 @@
 {
   "name": "facedetect",
-"homepage": "https://MartinDimitrov-zz.github.io/Face-Detect",
+  "homepage": "https://MartinDimitrov-zz.github.io/Face-Detect",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
