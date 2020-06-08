@@ -6,7 +6,9 @@ const FaceDetect = ({ imageUrl, box }) => {
         <div className='center ma'>
             <div className='absolute mt2'>
                 <img id='input-image' alt='' src={imageUrl} width='500px' heigh='auto'/>
-                <div className='bounding-box' style={{top: box.topRow, right: box.rightCol, bottom: box.bottomRow, left: box.leftCol}}></div>
+                {box.map((boxitem)=>{ 
+                    return (<div className="bounding-box"  key={boxitem.id} style={{top:boxitem.topRow, right:boxitem.rightCol, bottom:boxitem.bottomRow, left:boxitem.leftCol}}></div>); })
+                }
             </div>
         </div>
     );
