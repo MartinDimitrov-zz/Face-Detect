@@ -55,38 +55,25 @@ class App extends Component {
       }
    
     calculateFaceLocation = (data) => {
-        const FaceDetect = data.outputs[0].data.regions[0].region_info.bounding_box;
+        const FaceDetect = data.outputs[0].data.regions;
+        let boundingBoxArray = [];
         const image = document.getElementById('input-image');
         const width = Number(image.width);
         const height = Number(image.height);
-        return {
-            leftCol: FaceDetect.left_col * width,
-            topRow: FaceDetect.top_row * height,
-            rightCol: width - (FaceDetect.right_col * width),
-            bottomRow: height - (FaceDetect.bottom_row * height)
-        };
-    }
-    
-//    calculateFaceLocation = (data) => {
-//    const clarifaiFaceArray = data.outputs[0].data.regions;
-//    let boundingBoxArray = [];
-//    const image = document.getElementById('inputImage');
-//    const width = Number(image.width);
-//    const height = Number(image.height);
-//    for (let face of clarifaiFaceArray) {
-//      let percentageCoordinates = face.region_info.bounding_box;
-//      let idBoundingBox = face.id;
-//      let pixelCoordinates = {
-//        id: idBoundingBox,
-//        leftCol: percentageCoordinates.left_col * width,
-//        topRow: percentageCoordinates.top_row * height,
-//        rightCol: width - (percentageCoordinates.right_col * width),
-//        bottomRow: height - (percentageCoordinates.bottom_row * height)
-//      };
-//      boundingBoxArray.push(pixelCoordinates);
-//    }
-//    return boundingBoxArray;
-//  }
+        for (let face of FaceDetect) {
+            let percentageCoordinates = face.region_info.bounding_box;
+            let idBoundingBox = face.id;
+            let pixelCoordinates = {
+                id: idBoundingBox,
+                leftCol: percentageCoordinates.left_col * width,
+                topRow: percentageCoordinates.top_row * height,
+                rightCol: width - (percentageCoordinates.right_col * width),
+                bottomRow: height - (percentageCoordinates.bottom_row * height)
+            };
+            boundingBoxArray.push(pixelCoordinates);
+        }
+        return boundingBoxArray;
+    }    
     
     displayFaceBox = (box) => {
         this.setState({box: box});
