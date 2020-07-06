@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import Particles from 'react-particles-js';
-import './App.css';
 import Navigation from '../components/Navigation/Navigation';
 import Logo from '../components/Logo/Logo';
 import ImageLinkForm from '../components/ImageLinkForm/ImageLinkForm';
@@ -8,6 +7,10 @@ import FaceDetect from '../components/FaceDetect/FaceDetect';
 import Rank from '../components/Rank/Rank';
 import Signin from '../components/Signin/Signin';
 import Register from '../components/Register/Register';
+import Profile from '../components/Profile/Profile';
+import Modal from '../components/Modal/Modal';
+
+import './App.css';
 
 const particlesOptions = {
     particles: {
@@ -25,14 +28,17 @@ const initialState = {
     input: '',
     imageUrl: '',
     box: [],
-    route: 'signin',
+    route: 'signin',    
     isSignedIn: false,
+    isProfileOpen: false,    
     user: {
         id: '',
         name: '',
         email: '',                
         entries: 0,
-        joined: ''
+        joined: '',
+        pet: '',
+        age: ''
     }
 };
 
@@ -43,8 +49,43 @@ class App extends Component {
         
         this.state = initialState;
     }
+
+    componentDidMount() {
+        const token = window.sessionStorage.getItem('token');
+        if (token) {
+            // 3001
+            fetch('http://localhost:3001/signin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token
+                }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.id) {
+                // 3001
+                fetch(`http://localhost:3001/profile/${data.id}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token
+                    }
+                })
+                .then(response => response.json())
+                .then(user => {
+                    if (user && user.email) {
+                        this.loadUser(user)
+                        this.onRouteChange('home');
+                    }
+                })
+            }
+        })
+        .catch(console.log)
+        }
+    }
     
-      loadUser = (data) => {
+    loadUser = (data) => {
         this.setState({user: {
           id: data.id,
           name: data.name,
@@ -55,28 +96,33 @@ class App extends Component {
       }
    
     calculateFaceLocation = (data) => {
-        const FaceDetect = data.outputs[0].data.regions;
-        let boundingBoxArray = [];
-        const image = document.getElementById('input-image');
-        const width = Number(image.width);
-        const height = Number(image.height);
-        for (let face of FaceDetect) {
-            let percentageCoordinates = face.region_info.bounding_box;
-            let idBoundingBox = face.id;
-            let pixelCoordinates = {
-                id: idBoundingBox,
-                leftCol: percentageCoordinates.left_col * width,
-                topRow: percentageCoordinates.top_row * height,
-                rightCol: width - (percentageCoordinates.right_col * width),
-                bottomRow: height - (percentageCoordinates.bottom_row * height)
-            };
-            boundingBoxArray.push(pixelCoordinates);
+        if(data && data.outputs) {
+            const FaceDetect = data.outputs[0].data.regions;
+            let boundingBoxArray = [];
+            const image = document.getElementById('input-image');
+            const width = Number(image.width);
+            const height = Number(image.height);
+            for (let face of FaceDetect) {
+                let percentageCoordinates = face.region_info.bounding_box;
+                let idBoundingBox = face.id;
+                let pixelCoordinates = {
+                    id: idBoundingBox,
+                    leftCol: percentageCoordinates.left_col * width,
+                    topRow: percentageCoordinates.top_row * height,
+                    rightCol: width - (percentageCoordinates.right_col * width),
+                    bottomRow: height - (percentageCoordinates.bottom_row * height)
+                };
+                boundingBoxArray.push(pixelCoordinates);
+            }
+            return boundingBoxArray;
         }
-        return boundingBoxArray;
+        return;
     }    
     
     displayFaceBox = (box) => {
-        this.setState({box: box});
+        if(box) {
+            this.setState({box: box});
+        }        
     }
     
     onInputChange = (event) => {
@@ -88,7 +134,10 @@ class App extends Component {
         
         fetch('https://mighty-scrubland-27017.herokuapp.com/imageurl', {
             method: 'post',
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': window.sessionStorage.getItem('token')
+            },
             body: JSON.stringify({
                 input: this.state.input
             })
@@ -98,7 +147,10 @@ class App extends Component {
             if(response) {
                 fetch('https://mighty-scrubland-27017.herokuapp.com/image', {
                     method: 'put',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': window.sessionStorage.getItem('token')
+                    },
                     body: JSON.stringify({
                         id: this.state.user.id
                     })
@@ -116,20 +168,33 @@ class App extends Component {
     
     onRouteChange = (route) => {
         if(route === 'signout') {
-            this.setState(initialState);
+            return this.setState(initialState);
         } else if(route === 'home') {
             this.setState({ isSignedIn: true });
         }
         this.setState({ route: route });
     }
+
+    toggleModal = () => {
+        this.setState(state => ({
+          ...state,
+          isProfileOpen: !state.isProfileOpen,
+        }));
+      }
     
     render() {        
-        const { imageUrl, box, route, isSignedIn } = this.state;
+        const { imageUrl, box, route, isSignedIn, isProfileOpen, user } = this.state;
         
         return (
             <div className="App">
                 <Particles className='particles' params={particlesOptions}/>
-                <Navigation isSignedIn={isSignedIn} onRouteChange={this.onRouteChange}/>                
+                <Navigation isSignedIn={isSignedIn} onRouteChange={this.onRouteChange} toggleModal={this.toggleModal}/>
+                {
+                    isProfileOpen &&
+                    <Modal>
+                        <Profile isProfileOpen={isProfileOpen} toggleModal={this.toggleModal} user={user} loadUser={this.loadUser} />
+                    </Modal>
+                }               
                 {route === 'home'
                     ? <div> 
                         <Logo />
