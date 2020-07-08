@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import './Signin.css';
 
 class Signin extends Component {
     
@@ -19,30 +18,24 @@ class Signin extends Component {
     onPasswordChange = (event) => {
         this.setState({ signInPassword: event.target.value });
     };
-
-    saveAuthTokenInSessions = (token) => {
-        window.localStorage.setItem('token', token);
-    };
     
     onSubmitSignIn = () => {
-        fetch('http://localhost:3001/signin', {
-          method: 'post',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            email: this.state.signInEmail,
-            password: this.state.signInPassword
-          })
+        fetch('https://mighty-scrubland-27017.herokuapp.com/signin', {
+            method: 'post',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                email: this.state.signInEmail,
+                password: this.state.signInPassword
+            })
         })
-          .then(response => response.json())
-          .then(data => {
-            if (data && data.success === "true") {
-              this.saveAuthTokenInSessions(data.token)
-              this.props.loadUser(data.user)
-              this.props.onRouteChange('home');
-            }
-          })
-          .catch(console.log)
-      }
+            .then(response => response.json())
+            .then(user => {
+                if(user.id) {
+                    this.props.loadUser(user);
+                    this.props.onRouteChange('home');
+                }
+            });        
+    }
     
     render() {
         const { onRouteChange } =this.props;
@@ -56,7 +49,7 @@ class Signin extends Component {
                                 <label className="db fw6 lh-copy f6" htmlFor="email-address">Email</label>
                                 <input 
                                     onChange={this.onEmailChange}
-                                    className="pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100 hover-black" 
+                                    className="pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100" 
                                     type="email" 
                                     name="email-address"  
                                     id="email-address"/>
@@ -65,7 +58,7 @@ class Signin extends Component {
                                 <label className="db fw6 lh-copy f6" htmlFor="password">Password</label>
                                 <input 
                                     onChange={this.onPasswordChange}
-                                    className="b pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100 hover-black" 
+                                    className="b pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100" 
                                     type="password"
                                     name="password"  
                                     id="password"/>
